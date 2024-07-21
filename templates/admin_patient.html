@@ -1,0 +1,165 @@
+{%extends "admin.html" %}
+ <!-- Navigation marker -->
+{% block patient %}active{% endblock %}
+<!-- Content area-->
+{% block mainbody %}
+
+{% verbatim %}
+<div id="app2" class="container">
+  <div class="filter-container">
+    <div class="filter-item">
+      <el-button @click="onAddPatient">Add</el-button>
+    </div>
+  </div>
+  <div class="department-table">
+    <el-table
+      :data="list"
+      stripe
+      style="width: 100%">
+      <el-table-column
+        prop="id"
+        label="Id"
+        width="80">
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="Name"
+        width="80">
+      </el-table-column>
+      <el-table-column
+        prop="id_card"
+        label="Id card">
+      </el-table-column>
+      <el-table-column
+        prop="phone"
+        label="Phone">
+      </el-table-column>
+      <el-table-column
+        prop="sex"
+        label="Sex"
+        :formatter="onFormatterSex"
+        width="80">
+      </el-table-column>
+      <el-table-column
+        prop="age"
+        label="Age">
+      </el-table-column>
+    </el-table>
+  </div>
+
+  <!-- Added patient popup-->
+  <el-dialog title="Add patient" :visible.sync="showAddPatientForm">
+    <el-form ref="addPatientForm" :model="addPatientInfo" :rules="patientRules" label-width="80px" label-position="left">
+      <el-form-item label="Name" prop="name">
+        <el-input v-model="addPatientInfo.name"/>
+      </el-form-item>
+      <el-form-item label="Id card" prop="id_card">
+        <el-input v-model="addPatientInfo.id_card"/>
+      </el-form-item>
+      <el-form-item label="Password" prop="password">
+        <el-input v-model="addPatientInfo.password"/>
+      </el-form-item>
+      <el-form-item label="Phone" prop="phone">
+        <el-input v-model="addPatientInfo.phone"/>
+      </el-form-item>
+      <el-form-item label="Sex" prop="sex">
+        <el-input v-model="addPatientInfo.sex"/>
+      </el-form-item>
+      <el-form-item label="Age" prop="age">
+        <el-input v-model="addPatientInfo.age"/>
+      </el-form-item>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="showAddPatientForm = false">Cancellation</el-button>
+      <el-button type="primary" @click="onSubmitAddPatient">Determinate</el-button>
+    </div>
+  </el-dialog>
+</div>
+{% endverbatim %}
+<script>
+  new Vue({
+    el: '#app2',
+    data() {
+      return {
+        list: [],
+        // add
+        addPatientFormType: 1,
+        showAddPatientForm: false,
+        addPatientInfo: {
+          id: '',
+          name: '',
+          id_card: '',
+          password: '',
+          phone: '',
+          sex: 1,
+          age: 0
+        },
+        patientRules: {
+          name: [{ required: true, message: 'Please enter your name', trigger: 'blur' }],
+          id_card: [{ required: true, message: 'Please enter your ID card', trigger: 'blur' }],
+          department_id: [{ required: true, message: 'Please select the department', trigger: 'change' }],
+          password: [{ required: true, message: 'Please enter password', trigger: 'blur' }]
+        }
+      }
+    },
+    mounted() {
+      this.getPatientList()
+    },
+    methods: {
+      getPatientList() {
+        // Get list
+        axios.post(ToDJ('patientList'), new URLSearchParams()).then(res => {
+          if (res.data.code === 0) {
+            console.log(res.data.data)
+            this.list = res.data.data
+          } else {
+            this.NotifyFail(res.data.data)
+          }
+        })
+      },
+      // add
+      onAddPatient() {
+        this.addPatientFormType = 1
+        this.showAddPatientForm = true
+      },
+      // Commit add
+      onSubmitAddPatient() {
+        this.$refs.addPatientForm.validate((valid) => {
+          if (valid) {
+            // Newly added
+            if (this.addPatientFormType === 1) {
+              axios.post(ToDJ('patientAdd'), new URLSearchParams(this.addPatientInfo)).then(res => {
+                if (res.data.code === 0) {
+                  this.NotifySuc("Add successfully")
+                  this.showAddPatientForm = false
+                  this.getPatientList()
+                } else {
+                  this.NotifyFail(res.data.data)
+                }
+              })
+            }
+          }
+        })
+      },
+      // 性别格式化
+      onFormatterSex(row, column, callValue, index) {
+        return row.sex === 1 ? 'Male' : 'Female'
+      },
+      // 成功提示
+      NotifySuc(str) {
+        this.$message({
+          message: str,
+          type: 'success'
+        })
+			},
+      // 错误提示
+			NotifyFail(str) {
+        this.$message({
+          message: str,
+          type: 'warning'
+        })
+			}
+    }
+  })
+</script>
+{% endblock %}

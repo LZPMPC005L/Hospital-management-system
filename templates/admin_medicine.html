@@ -1,0 +1,138 @@
+{%extends "admin.html" %}
+ <!-- Navigation marker -->
+{% block medicine %}active{% endblock %}
+<!-- Content area-->
+{% block mainbody %}
+
+{% verbatim %}
+<div id="app2" class="container">
+  <div class="filter-container">
+    <div class="filter-item">
+      <el-button @click="onAddMedicine">Add</el-button>
+    </div>
+  </div>
+  <div class="department-table">
+    <el-table
+      :data="list"
+      stripe
+      style="width: 100%">
+      <el-table-column
+        prop="id"
+        label="Id"
+        width="180">
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="Name"
+        width="180">
+      </el-table-column>
+      <el-table-column
+        prop="price"
+        label="Unit price">
+      </el-table-column>
+      <el-table-column
+        prop="unit"
+        label="Unit">
+      </el-table-column>
+    </el-table>
+  </div>
+
+  <!-- Added medicine popup -->
+  <el-dialog title="Add medicine" :visible.sync="showAddMedicineForm">
+    <el-form ref="addMedicineForm" :model="addMedicineInfo" :rules="medicineRules" label-width="80px" label-position="left">
+      <el-form-item label="Name" prop="name">
+        <el-input v-model="addMedicineInfo.name"/>
+      </el-form-item>
+      <el-form-item label="Unit price" prop="price">
+        <el-input v-model="addMedicineInfo.price"/>
+      </el-form-item>
+      <el-form-item label="Quantity" prop="unit">
+        <el-input v-model="addMedicineInfo.unit"/>
+      </el-form-item>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="showAddMedicineForm = false">Cancellation</el-button>
+      <el-button type="primary" @click="onSubmitAddMedicine">Determinate</el-button>
+    </div>
+  </el-dialog>
+</div>
+{% endverbatim %}
+<script>
+  new Vue({
+    el: '#app2',
+    data() {
+      return {
+        list: [],
+        // add
+        addMedicineFormType: 1,
+        showAddMedicineForm: false,
+        addMedicineInfo: {
+          id: '',
+          name: '',
+          price: '',
+          unit: ''
+        },
+        medicineRules: {
+          name: [{ required: true, message: 'Please enter name', trigger: 'blur' }],
+          price: [{ required: true, message: 'Please enter unit price', trigger: 'blur' }],
+          unit: [{ required: true, message: 'Please enter quantity', trigger: 'blur' }]
+        }
+      }
+    },
+    mounted() {
+      this.getMedicineList()
+    },
+    methods: {
+      getMedicineList() {
+        // Get list
+        axios.post(ToDJ('medicineList'), new URLSearchParams()).then(res => {
+          if (res.data.code === 0) {
+            console.log(res.data.data)
+            this.list = res.data.data
+          } else {
+            this.NotifyFail(res.data.data)
+          }
+        })
+      },
+      // Click Add
+      onAddMedicine() {
+        this.addMedicineFormType = 1
+        this.showAddMedicineForm = true
+      },
+      // Commit add
+      onSubmitAddMedicine() {
+        this.$refs.addMedicineForm.validate((valid) => {
+          if (valid) {
+            // Newly added
+            if (this.addMedicineFormType === 1) {
+              axios.post(ToDJ('medicineAdd'), new URLSearchParams(this.addMedicineInfo)).then(res => {
+                if (res.data.code === 0) {
+                  this.NotifySuc("Add successfully")
+                  this.showAddMedicineForm = false
+                  this.getMedicineList()
+                } else {
+                  this.NotifyFail(res.data.data)
+                }
+              })
+            }
+          }
+        })
+      },
+      // Success tip
+      NotifySuc(str) {
+        this.$message({
+          message: str,
+          type: 'success'
+        })
+			},
+      // Error prompt
+			NotifyFail(str) {
+        this.$message({
+          message: str,
+          type: 'warning'
+        })
+			}
+    }
+  })
+</script>
+{% endblock %}

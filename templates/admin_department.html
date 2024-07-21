@@ -1,0 +1,76 @@
+{%extends "admin.html" %}
+ <!-- Navigation marker -->
+{% block department %}active{% endblock %}
+<!-- Content area  -->
+{% block mainbody %}
+
+{% verbatim %}
+<div id="app2" class="container">
+  <div class="department-table">
+    <el-table
+      :data="list"
+      stripe
+      style="width: 100%">
+      <el-table-column
+        prop="id"
+        label="ID"
+        width="180">
+      </el-table-column>
+      <el-table-column
+        prop="name"
+        label="Name"
+        width="180"> 
+      </el-table-column>
+      <el-table-column
+        prop="registration_fee"
+        label="Registration_fee">
+      </el-table-column>
+      <el-table-column
+        prop="doctor_num"
+        label="Doctor number">
+      </el-table-column>
+    </el-table>
+  </div>
+</div>
+{% endverbatim %}
+<script>
+  new Vue({
+    el: '#app2',
+    data() {
+      return {
+        list: []
+      }
+    },
+    mounted() {
+      this.getDepartmentList()
+    },
+    methods: {
+      getDepartmentList() {
+        // Get department list
+        axios.post(ToDJ('departmentList'), new URLSearchParams()).then(res => {
+          if (res.data.code === 0) {
+            console.log(res.data.data)
+            this.list = res.data.data
+          } else {
+            this.NotifyFail(res.data.data)
+          }
+        })
+      },
+      // Success tip
+      NotifySuc(str) {
+        this.$message({
+          message: str,
+          type: 'success'
+        })
+			},
+      // Error prompt
+			NotifyFail(str) {
+        this.$message({
+          message: str,
+          type: 'warning'
+        })
+			}
+    }
+  })
+</script>
+{% endblock %}

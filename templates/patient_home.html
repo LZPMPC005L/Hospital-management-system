@@ -1,0 +1,120 @@
+{%extends "patient.html" %}
+ <!-- Navigation marker-->
+{% block home %}active{% endblock %}
+<!-- Content area-->
+{% block mainbody %}
+
+{% verbatim %}
+<div id="app2" class="container">
+  <div class="order-wrapper">
+    <el-form ref="addOrderForm" :model="addOrderInfo" :rules="orderRules" label-width="80px" label-position="left">
+      <el-form-item label="Name" prop="name">
+        <el-input disabled v-model="addOrderInfo.name"/>
+      </el-form-item>
+      <el-form-item label="Id card" prop="id_card">
+        <el-input disabled v-model="addOrderInfo.id_card"/>
+      </el-form-item>
+      <el-form-item label="Department" prop="department_id">
+        <el-select v-model="addOrderInfo.department_id" placeholder="Please select department">
+          <el-option
+            v-for="item in departmentList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"/>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="Self report" prop="readme">
+        <el-input v-model="addOrderInfo.readme"/>
+      </el-form-item>
+    </el-form>
+    <div slot="footer" class="dialog-footer">
+      <el-button type="primary" @click="onSubmitOrder">Immediately make an appointment</el-button>
+    </div>
+  </div>
+</div>
+{% endverbatim %}
+<script>
+  new Vue({
+    el: '#app2',
+    data() {
+      return {
+        userInfo: {
+          id: '',
+          id_card: '',
+          name: '',
+          sex: '',
+          age: ''
+        },
+        addOrderInfo: {
+          user_id: '',
+          id_card: '',
+          name: '',
+          readme: '',
+          registration_fee: '',
+          department_id: '',
+          department_name: ''
+        },
+        // departmentList
+        departmentList: [],
+        orderRules: {
+          name: [{ required: true, message: 'Please enter your name', trigger: 'blur' }],
+          id_card: [{ required: true, message: 'Please enter your ID card', trigger: 'blur' }],
+          department_id: [{ required: true, message: 'Please select the department', trigger: 'change' }],
+          readme: [{ required: true, message: 'Please enter password', trigger: 'blur' }]
+        }
+      }
+    },
+    mounted() {
+      let userInfo = window.localStorage.getItem("hospital_userInfo")
+      if (userInfo) {
+        userInfo = JSON.parse(userInfo)
+        this.userInfo = userInfo
+        this.addOrderInfo.id_card = userInfo.id_card
+        this.addOrderInfo.name = userInfo.name
+        this.addOrderInfo.user_id = userInfo.id
+      }
+      this.getDepartmentList()
+    },
+    methods: {
+      getDepartmentList() {
+        // getDepartmentList
+        axios.post(ToDJ('departmentList'), new URLSearchParams()).then(res => {
+          if (res.data.code === 0) {
+            this.departmentList = res.data.data
+          } else {
+            this.NotifyFail(res.data.data)
+          }
+        })
+      },
+      onSubmitOrder() {
+        this.$refs.addOrderForm.validate((valid) => {
+          if (valid) {
+            // add
+            axios.post(ToDJ('orderAdd'), new URLSearchParams(this.addOrderInfo)).then(res => {
+              if (res.data.code === 0) {
+                this.NotifySuc("Successful registration")
+              } else {
+                this.NotifyFail(res.data.data)
+              }
+            })
+          }
+        })
+      },
+      // success
+      NotifySuc(str) {
+        this.$message({
+          message: str,
+          type: 'success'
+        })
+			},
+      // warning
+			NotifyFail(str) {
+        this.$message({
+          message: str,
+          type: 'warning'
+        })
+			}
+    }
+  })
+</script>
+{% endblock %}
